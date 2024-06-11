@@ -1,5 +1,7 @@
 package org.d3if0037.catatanku.ui.screen
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +34,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,15 +52,31 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.ClearCredentialException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.d3if0037.catatanku.BuildConfig
 import org.d3if0037.catatanku.R
 import org.d3if0037.catatanku.model.MainViewModel
 import org.d3if0037.catatanku.model.Note
+import org.d3if0037.catatanku.model.User
 import org.d3if0037.catatanku.network.ApiStatus
+import org.d3if0037.catatanku.network.UserDataStore
 import org.d3if0037.catatanku.ui.theme.AbuMuda
 import org.d3if0037.catatanku.ui.theme.CatatanKuTheme
 import org.d3if0037.catatanku.ui.theme.WarnaText
@@ -64,6 +85,11 @@ import org.d3if0037.catatanku.ui.theme.WarnaUtama
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
+    val context = LocalContext.current
+    val dataStore = UserDataStore(context)
+    val user by dataStore.userFlow.collectAsState(User())
+    var showDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,12 +100,31 @@ fun MainScreen() {
                     containerColor = WarnaUtama,
                     titleContentColor = WarnaText
                 ),
-                actions = {}
+                actions = {
+                    IconButton(onClick = {
+                        if (user.email.isEmpty()) {
+                            CoroutineScope(Dispatchers.IO).launch { signIn(context, dataStore) }
+                        }
+                        else {
+                            showDialog = true
+                        }
+                    }) {
+                        Icon(
+                            modifier = Modifier.size(30.dp),
+                            painter = painterResource(id = R.drawable.account_circle),
+                            contentDescription = stringResource(R.string.profil),
+                            tint = WarnaText
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
             IconButton(
-                modifier = Modifier.size(57.dp).clip(RoundedCornerShape(40)).background(WarnaUtama),
+                modifier = Modifier
+                    .size(57.dp)
+                    .clip(RoundedCornerShape(40))
+                    .background(WarnaUtama),
                 onClick = {}) {
                 Icon(
                     modifier = Modifier.size(43.dp),
@@ -91,6 +136,15 @@ fun MainScreen() {
         }
     ) { padding ->
         ScreenContent(Modifier.padding(padding))
+
+        if (showDialog) {
+            ProfilDialog(
+                user = user,
+                onDismissRequest = { showDialog = false }) {
+                CoroutineScope(Dispatchers.IO).launch { signOut(context, dataStore) }
+                showDialog = false
+            }
+        }
     }
 }
 
@@ -189,6 +243,55 @@ fun ItemsGrid(catatan : Note) {
             modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
             text = catatan.deskripsi
         )
+    }
+}
+
+private suspend fun signIn(context: Context, dataStore: UserDataStore) {
+    val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+        .setFilterByAuthorizedAccounts(false)
+        .setServerClientId(BuildConfig.API_KEY)
+        .build()
+
+    val request: GetCredentialRequest = GetCredentialRequest.Builder()
+        .addCredentialOption(googleIdOption)
+        .build()
+
+    try {
+        val credentialManager = CredentialManager.create(context)
+        val result = credentialManager.getCredential(context, request)
+        handleSignIn(result, dataStore)
+    } catch (e: GetCredentialException) {
+        Log.e("SIGN-IN", "Error:${e.errorMessage}")
+    }
+}
+
+private suspend fun handleSignIn(result: GetCredentialResponse, dataStore: UserDataStore) {
+    val credential = result.credential
+    if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+        try {
+            val googleId = GoogleIdTokenCredential.createFrom(credential.data)
+            val nama = googleId.displayName ?: ""
+            val email = googleId.id
+            val photoUrl = googleId.profilePictureUri.toString()
+            dataStore.saveData(User(nama, email, photoUrl))
+        } catch (e: GoogleIdTokenParsingException) {
+            Log.e("SIGN-IN", "Error: ${e.message}")
+        }
+    }
+    else {
+        Log.e("SIGN-IN", "Error: unrecognized custom credential type")
+    }
+}
+
+private suspend fun signOut(context: Context, dataStore: UserDataStore) {
+    try {
+        val credentialManager = CredentialManager.create(context)
+        credentialManager.clearCredentialState(
+            ClearCredentialStateRequest()
+        )
+        dataStore.saveData(User())
+    } catch (e: ClearCredentialException) {
+        Log.e("SIGN-IN", "Error: ${e.errorMessage}")
     }
 }
 
