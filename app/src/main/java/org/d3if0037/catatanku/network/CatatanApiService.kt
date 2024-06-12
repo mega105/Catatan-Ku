@@ -16,7 +16,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 
-private const val BASE_URL = "https://ghastly-delicate-dragon.ngrok-free.app/"
+private const val BASE_URL = "https://c3e6-114-79-49-192.ngrok-free.app/"
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -28,18 +28,17 @@ private val retrofit = Retrofit.Builder()
     .build()
 
 interface TempatApiService {
-    @GET("link/files/adrian/view.php")
+    @GET("belajarRestApiWeb/files/adrian/view.php")
     suspend fun getCatatan(): List<Note>
 
     @Multipart
-    @POST("link/files/adrian/AddCatatan.php")
+    @POST("belajarRestApiWeb/files/adrian/AddCatatan.php")
     suspend fun postCatatan(
         @Header("Authorization") userId: String,
         @Part("judul") judul: RequestBody,
         @Part("deskripsi") deskripsi: RequestBody,
-        @Part image: MultipartBody.Part
+        @Part imageId: MultipartBody.Part
     ): OpStatus
-
 }
 
 object CatatanApi {
@@ -48,8 +47,10 @@ object CatatanApi {
     }
 
     fun getCatatanUrl(imageId: String): String {
-        return "${BASE_URL}image.php?id=$imageId"
+        val encodedImageId = imageId.replace("&", "%26")
+        return "${BASE_URL}belajarRestApiWeb/files/adrian/image.php?imageId=$encodedImageId"
     }
+
 }
 
 enum class ApiStatus { LOADING, SUCCESS, FAILED }

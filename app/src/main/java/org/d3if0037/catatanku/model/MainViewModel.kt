@@ -80,7 +80,7 @@ class MainViewModel : ViewModel() {
         val requestBody = byteArray.toRequestBody(
             "image/jpg".toMediaTypeOrNull(), 0, byteArray.size)
         return MultipartBody.Part.createFormData(
-            "image", "image.jpg", requestBody)
+            "imageId", "image.jpg", requestBody)
     }
 
     fun clearMessage() { errorMessage.value = null }
