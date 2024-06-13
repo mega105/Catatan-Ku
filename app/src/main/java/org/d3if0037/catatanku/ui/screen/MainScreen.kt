@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -205,10 +204,10 @@ fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier) 
     }
 
     Column(modifier = modifier.padding(24.dp)) {
-        Text(text = "INI ADALAH JUDUL", fontWeight = FontWeight.Bold, fontSize = 30.sp)
+        Text(text = "CATATAN KU", fontWeight = FontWeight.Bold, fontSize = 30.sp)
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "ini adalah tulisan kecil yang panjang pokoknya ya bang pokoknya panjang gaergrga banget deh sampe sampe panjaaaaang",
+            text = "ini adalah aplikasi untuk mencatat keseharian kamu :)",
             color = Color.Gray,
             textAlign = TextAlign.Justify
         )
@@ -393,7 +392,7 @@ private fun getCroppedImage(
         return null
     }
 
-    var uri = result.uriContent ?: return null
+    val uri = result.uriContent ?: return null
 
     return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
         MediaStore.Images.Media.getBitmap(resolver, uri)
