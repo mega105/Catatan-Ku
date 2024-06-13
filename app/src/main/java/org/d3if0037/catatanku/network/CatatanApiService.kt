@@ -15,8 +15,9 @@ import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Query
 
-private const val BASE_URL = "https://c3e6-114-79-49-192.ngrok-free.app/"
+private const val BASE_URL = "https://ac85-114-79-49-187.ngrok-free.app/"
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -28,11 +29,13 @@ private val retrofit = Retrofit.Builder()
     .build()
 
 interface TempatApiService {
-    @GET("belajarRestApiWeb/files/adrian/view.php")
-    suspend fun getCatatan(): List<Note>
+    @GET("belajarRestApiWeb/files/adrian/test.php")
+    suspend fun getCatatan(
+        @Header("Authorization") userId: String
+    ): List<Note>
 
     @Multipart
-    @POST("belajarRestApiWeb/files/adrian/AddCatatan.php")
+    @POST("belajarRestApiWeb/files/adrian/AddCatatanTest.php")
     suspend fun postCatatan(
         @Header("Authorization") userId: String,
         @Part("judul") judul: RequestBody,

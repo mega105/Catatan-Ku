@@ -4,4 +4,5 @@ data class Note(
     val judul: String,
     val deskripsi: String,
     val imageId: String,
+    val mine: Int = 0
 )

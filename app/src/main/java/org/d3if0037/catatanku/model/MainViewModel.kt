@@ -26,18 +26,18 @@ class MainViewModel : ViewModel() {
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    init {
-        retrieveData()
-    }
+//    init {
+//        retrieveData()
+//    }
 
-    fun retrieveData() {
+    fun retrieveData(userId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             status.value = ApiStatus.LOADING
             try {
-                val result = CatatanApi.service.getCatatan()
+                val result = CatatanApi.service.getCatatan(userId)
                 Log.d("MainViewModel", "Succsess: $result")
 
-                data.value = CatatanApi.service.getCatatan()
+                data.value = CatatanApi.service.getCatatan(userId)
                 status.value = ApiStatus.SUCCESS
             } catch (e: Exception) {
                 Log.d("MainViewModel", "Failur: ${e.message}")
@@ -62,7 +62,7 @@ class MainViewModel : ViewModel() {
                 )
 
                 if (result.status == "success")
-                    retrieveData()
+                    retrieveData(userId)
                 else
                     throw Exception(result.message)
             } catch (e: Exception) {
