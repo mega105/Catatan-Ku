@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -239,8 +240,11 @@ fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier) 
                         modifier = Modifier.padding(top = 24.dp),
                         columns = GridCells.Fixed(2)
                     ) {
-                        items(data) {
-                            ItemsGrid(catatan = it)
+                        items(data) { note ->
+                            ItemsGrid(catatan = note, onDelete = { catatanId ->
+                                Log.d("ScreenContent", "Deleting hewan with ID: $catatanId")
+                                viewModel.deleteData(userId, catatanId)
+                            })
                         }
                     }
                 }
@@ -267,7 +271,18 @@ fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier) 
 }
 
 @Composable
-fun ItemsGrid(catatan: Note) {
+fun ItemsGrid(catatan: Note, onDelete: (String) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    DisplayAlertDialog(
+        openDialog = showDialog,
+        onDismissRequest = { showDialog = false },
+        onConfirmation = {
+            onDelete(catatan.id)
+            showDialog = false
+        }
+    )
+
     Column(
         modifier = Modifier
             .padding(4.dp)
@@ -277,17 +292,32 @@ fun ItemsGrid(catatan: Note) {
         Box(
             contentAlignment = Alignment.BottomCenter
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(CatatanApi.getCatatanUrl(catatan.imageId))
-                    .crossfade(true)
-                    .build(),
-                modifier = Modifier.fillMaxWidth(),
-                contentDescription = catatan.judul,
-                contentScale = ContentScale.Crop,
-                placeholder = painterResource(id = R.drawable.loading_img),
-                error = painterResource(id = R.drawable.broken_img),
-            )
+            Box(
+                contentAlignment = Alignment.TopEnd
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(CatatanApi.getCatatanUrl(catatan.imageId))
+                        .crossfade(true)
+                        .build(),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentDescription = catatan.judul,
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(id = R.drawable.loading_img),
+                    error = painterResource(id = R.drawable.broken_img),
+                )
+                if (catatan.mine == 1) {
+                    IconButton(onClick = {
+                        showDialog = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
             Text(
                 modifier = Modifier
                     .background(Color(0f, 0f, 0f, 0.5f))

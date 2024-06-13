@@ -67,6 +67,24 @@ class MainViewModel : ViewModel() {
                     throw Exception(result.message)
             } catch (e: Exception) {
                 Log.d("MainViewModel", "Failure2: ${e.message}")
+                errorMessage.value = "${e.message}"
+            }
+        }
+    }
+
+    fun deleteData(userId: String, hewanId: String){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = CatatanApi.service.deleteCatatan(userId, hewanId)
+                if (response.status == "success") {
+                    Log.d("MainViewModel", "Image deleted successfully: $hewanId")
+                    retrieveData(userId) // Refresh data after deletion
+                } else {
+                    Log.d("MainViewModel", "Failed to delete the image: ${response.message}")
+                    errorMessage.value = "Failed to delete the image: ${response.message}"
+                }
+            } catch (e: Exception) {
+                Log.d("MainViewModel", "Failure: ${e.message}")
                 errorMessage.value = "Error: ${e.message}"
             }
         }

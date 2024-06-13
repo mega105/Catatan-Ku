@@ -10,6 +10,7 @@ import org.d3if0037.catatanku.model.OpStatus
 import retrofit2.Converter
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
@@ -29,19 +30,25 @@ private val retrofit = Retrofit.Builder()
     .build()
 
 interface TempatApiService {
-    @GET("belajarRestApiWeb/files/adrian/test.php")
+    @GET("belajarRestApiWeb/files/adrian/view.php")
     suspend fun getCatatan(
         @Header("Authorization") userId: String
     ): List<Note>
 
     @Multipart
-    @POST("belajarRestApiWeb/files/adrian/AddCatatanTest.php")
+    @POST("belajarRestApiWeb/files/adrian/AddCatatan.php")
     suspend fun postCatatan(
         @Header("Authorization") userId: String,
         @Part("judul") judul: RequestBody,
         @Part("deskripsi") deskripsi: RequestBody,
         @Part imageId: MultipartBody.Part
     ): OpStatus
+
+    @DELETE("belajarRestApiWeb/files/adrian/delete.php")
+    suspend fun deleteCatatan(
+        @Header("Authorization") userId: String,
+        @Query("id") id: String
+    ) : OpStatus
 }
 
 object CatatanApi {
